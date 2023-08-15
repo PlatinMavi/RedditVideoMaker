@@ -7,6 +7,7 @@ from moviepy.editor import VideoFileClip, AudioFileClip, ImageClip
 from moviepy.video.tools.drawing import color_gradient
 from moviepy.config import change_settings
 import random
+import os
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -15,6 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 change_settings({"IMAGEMAGICK_BINARY": r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"})
+#PLEASE CUSTOMIZE THIS FOR PERSONAL USAGE
 
 def screenShotPost(url):
     chrome_options = Options()
@@ -25,7 +27,7 @@ def screenShotPost(url):
     driver.get(url)
     WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.TAG_NAME, "shreddit-post")))
     post = driver.find_element(By.TAG_NAME, 'shreddit-post')
-    post.screenshot(filename="post.png")
+    post.screenshot(filename="./temp/Post.png")
     driver.quit()
 
 
@@ -51,22 +53,22 @@ def ToSpeechPYTTSX3(content):
     engine.setProperty('rate', 175)
     
     text = content[1] + " " + content[2]
-    # engine.say(text)
-    engine.save_to_file(text, "example.mp3")
+    engine.save_to_file(text, "./temp/TextToSpeech.mp3")
     engine.runAndWait()
 
-    return text
+    return content[1]
 
 
 def ToSpeechGTTS(content):
     text = content[1] + " " + content[2]
     tts = gTTS(text, lang='en', tld="com.au")
-    tts.save("example.mp3")
-    return text
+    tts.save("./temp/TextToSpeech.mp3")
+    return content[1]
 
 
-#VİDEO MAKER
-def GetVideoPNG(screenshotpath = r"C:\Users\PC\Desktop\RedditVideoMaker\post.png",input_video_path = r"C:\Users\PC\Desktop\RedditVideoMaker\SubwaySurfer.mp4", input_audio_path = r"C:\Users\PC\Desktop\RedditVideoMaker\example.mp3", output_path = r"C:\Users\PC\Desktop\RedditVideoMaker\Output\output.mp4"):
+#VIDEO MAKER
+def GetVideoPNG(name,screenshotpath = "./temp/Post.png",input_video_path = "./BackGrounds/SubwaySurfer.mp4", input_audio_path = "./temp/TextToSpeech.mp3"):
+    output_path = f"./Output/{name}.mp4"
     video_clip = VideoFileClip(input_video_path)
     audio_clip = AudioFileClip(input_audio_path)
 
@@ -101,25 +103,12 @@ def GetVideoPNG(screenshotpath = r"C:\Users\PC\Desktop\RedditVideoMaker\post.png
     video_clip.close()
     audio_clip.close()
 
-def GetVideo(input_video_path = r"C:\Users\PC\Desktop\RedditVideoMaker\SubwaySurfer.mp4", input_audio_path = r"C:\Users\PC\Desktop\RedditVideoMaker\example.mp3", output_path = r"C:\Users\PC\Desktop\RedditVideoMaker\Output\output.mp4"):
-    video_clip = VideoFileClip(input_video_path)
-    audio_clip = AudioFileClip(input_audio_path)
-
-    max_start_time = video_clip.duration - audio_clip.duration
-    start_time = random.uniform(0, max_start_time)
-    cropped_video = video_clip.subclip(start_time, start_time + audio_clip.duration)
-    final_video = cropped_video.set_audio(audio_clip)
-    final_video = final_video.volumex(0.8)
-
-    final_video.write_videofile(output_path, codec='libx264')
-    video_clip.close()
-    audio_clip.close()
-
-
 def Scrape(url):
     screenShotPost(url)
     result = ScrapePostContent(url)
-    text = ToSpeechPYTTSX3(result)
+    name = ToSpeechPYTTSX3(result)
     print("Scraped Succesfully")
+    GetVideoPNG(name)
 
-    GetVideoPNG()
+    os.remove("./temp/TextToSpeech.mp3")
+    os.remove("./temp/Post.png")
